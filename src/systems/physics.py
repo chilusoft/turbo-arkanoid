@@ -11,24 +11,39 @@ class PhysicsSystem:
         nearest_y = max(rect.top, min(cy, rect.bottom))
         dx = cx - nearest_x
         dy = cy - nearest_y
-        if dx == 0 and dy == 0:
-            return False
-        overlap = ball.radius - math.sqrt(dx * dx + dy * dy)
-        if overlap <= 0:
-            return False
-        if dx == 0 and dy == 0:
-            ball.vy = -ball.vy
-            return True
-        dist = math.sqrt(dx * dx + dy * dy)
-        nx = dx / dist
-        ny = dy / dist
+        inside = dx == 0 and dy == 0
+        if inside:
+            to_left = cx - rect.left
+            to_right = rect.right - cx
+            to_top = cy - rect.top
+            to_bottom = rect.bottom - cy
+            min_dist = min(to_left, to_right, to_top, to_bottom)
+            if min_dist == to_left:
+                nx, ny = -1, 0
+                ball.x = rect.left - ball.radius
+            elif min_dist == to_right:
+                nx, ny = 1, 0
+                ball.x = rect.right + ball.radius
+            elif min_dist == to_top:
+                nx, ny = 0, -1
+                ball.y = rect.top - ball.radius
+            else:
+                nx, ny = 0, 1
+                ball.y = rect.bottom + ball.radius
+        else:
+            overlap = ball.radius - math.sqrt(dx * dx + dy * dy)
+            if overlap <= 0:
+                return False
+            dist = math.sqrt(dx * dx + dy * dy)
+            nx = dx / dist
+            ny = dy / dist
+            ball.x += nx * overlap
+            ball.y += ny * overlap
         dot = ball.vx * nx + ball.vy * ny
         if dot > 0:
             return True
         ball.vx -= 2 * dot * nx
         ball.vy -= 2 * dot * ny
-        ball.x += nx * overlap
-        ball.y += ny * overlap
         return True
 
     @staticmethod
