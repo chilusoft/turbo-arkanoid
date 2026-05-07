@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pygame numpy coverage
+
+      - name: Run tests with coverage
+        run: |
+          SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy \
+            python -m coverage run -m unittest discover -v tests/
+
+      - name: Generate coverage report
+        run: |
+          python -m coverage json -o /tmp/coverage.json
+          python -m coverage report
+
+      - name: Generate badge
+        run: python .github/workflows/make_badge.py
+
+      - name: Deploy badge to gh-pages
+        if: github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./badge_output
+          destination_dir: .
+          keep_files: false
+
+      - name: Comment coverage on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = JSON.parse(fs.readFileSync('/tmp/coverage.json', 'utf8'));
+            const total = report.totals.percent_covered_display;
+            let table = '| File | Coverage |\n|------|----------|\n';
+            for (const [f, d] of Object.entries(report.files)) {
+              table += `| \`${f}\` | ${d.summary.percent_covered_display}% |\n`;
+            }
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## Coverage Report\n\n**Total: ${total}%**\n\n${table}`
+            });

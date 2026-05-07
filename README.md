@@ -1,5 +1,8 @@
 # Turbo-Arkanoid
 
+[![CI](https://github.com/chilusoft/turbo-arkanoid/actions/workflows/ci.yml/badge.svg)](https://github.com/chilusoft/turbo-arkanoid/actions/workflows/ci.yml)
+[![coverage](https://img.shields.io/endpoint?url=https://chilusoft.github.io/turbo-arkanoid/coverage.json)](https://chilusoft.github.io/turbo-arkanoid/coverage.svg)
+
 A modern Arkanoid clone built with Python and Pygame.
 
 ## Controls
