@@ -1,3 +1,4 @@
+import math
 import pygame
 from .config import (
     WIN_WIDTH, WIN_HEIGHT, FPS, TITLE, BLACK, WHITE, NEON_RED,
@@ -19,6 +20,7 @@ from .ui.hud import HUD, Menu, PauseOverlay, GameOverOverlay
 
 class Game:
     def __init__(self):
+        pygame.mixer.pre_init(44100, -16, 2)
         pygame.init()
         self.screen = pygame.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
         pygame.display.set_caption(TITLE)
@@ -51,12 +53,16 @@ class Game:
         self.combo = 0
         self.combo_timer = 0
         self.sticky_timer = 0
+        self.stuck_timer = 0
+        self.cpu_mode = False
 
     def start_game(self):
         self.score = 0
         self.lives = INITIAL_LIVES
         self.combo = 0
         self.combo_timer = 0
+        self.stuck_timer = 0
+        self.cpu_mode = False
         self.powerups.clear()
         self.bullets.clear()
         self.particles.clear()
@@ -77,6 +83,8 @@ class Game:
             return
         self.balls = [Ball()]
         self.balls[0].follow_paddle(self.paddle)
+        self.stuck_timer = 0
+        self.cpu_mode = False
         self.effects.flash()
 
     def handle_input(self):
@@ -97,6 +105,10 @@ class Game:
                 self.sound.play("menu_select")
                 if choice == "Start Game":
                     self.start_game()
+                elif choice == "CPU Play":
+                    self.start_game()
+                    self.stuck_timer = 30001
+                    self.cpu_mode = True
                 elif choice == "Quit":
                     self.quit()
 
@@ -104,14 +116,42 @@ class Game:
             if self.input.is_key_pressed(pygame.K_p):
                 self.state = "paused"
 
-            if self.input.is_key_pressed(pygame.K_SPACE):
-                launched = False
+            if self.input.is_key_pressed(pygame.K_c):
+                self.cpu_mode = not self.cpu_mode
+                if self.cpu_mode:
+                    self.stuck_timer = 30001
+
+            launched = False
+            if self.input.is_key_pressed(pygame.K_SPACE) and not self.cpu_mode:
                 for ball in self.balls:
                     if ball.stuck:
                         ball.launch()
                         launched = True
-                if launched:
-                    self.sound.play("paddle_hit")
+
+            any_stuck = any(ball.stuck for ball in self.balls)
+            if any_stuck:
+                self.stuck_timer += self.dt
+                if self.stuck_timer >= 30000 and not self.cpu_mode:
+                    self.cpu_mode = True
+
+            if self.cpu_mode:
+                launched_balls = [b for b in self.balls if not b.stuck]
+                if launched_balls:
+                    target = max(launched_balls, key=lambda b: b.y)
+                    target_x = target.cx - self.paddle.w // 2
+                else:
+                    target_x = self.balls[0].cx - self.paddle.w // 2
+                    if self.stuck_timer >= 30500:
+                        for ball in self.balls:
+                            if ball.stuck:
+                                ball.launch()
+                                launched = True
+                diff = target_x - self.paddle.x
+                if abs(diff) > 2:
+                    self.paddle.x += math.copysign(min(abs(diff), self.paddle.speed), diff)
+                self.paddle.x = max(0, min(WIN_WIDTH - self.paddle.w, self.paddle.x))
+            if launched:
+                self.sound.play("paddle_hit")
 
             fire = self.paddle.update(self.dt, self.input)
             if fire:
@@ -160,6 +200,8 @@ class Game:
                     self.balls[0].follow_paddle(self.paddle)
                     self.powerups.clear()
                     self.bullets.clear()
+                    self.stuck_timer = 0
+                    self.cpu_mode = False
                     self.sound.play("level_up")
                 else:
                     self.sound.play("level_up")
@@ -202,6 +244,8 @@ class Game:
                     continue
                 if ball.rect.colliderect(brick.rect):
                     self.physics.bounce_ball_rect(ball, brick.rect)
+                    if ball.fire:
+                        brick.hp = 1
                     destroyed = brick.hit()
                     cx, cy = brick.rect.center
                     pts = brick.score
@@ -271,10 +315,13 @@ class Game:
             self.paddle.activate_laser(POWERUP_TYPES["laser"]["duration"])
         elif ptype == "fast":
             for ball in self.balls:
-                self.physics.update_ball_speed(ball, 1.5)
+                ball.activate_fast(POWERUP_TYPES["fast"]["duration"])
         elif ptype == "slow":
             for ball in self.balls:
                 self.physics.update_ball_speed(ball, 0.67)
+        elif ptype == "fire":
+            for ball in self.balls:
+                ball.activate_fire(POWERUP_TYPES["fire"]["duration"])
         elif ptype == "life":
             self.lives = min(MAX_LIVES, self.lives + 1)
         self.particles.emit_burst(pw.x + pw.size // 2, pw.y + pw.size // 2, pw.color)
@@ -317,6 +364,10 @@ class Game:
             self.particles.draw(self.screen)
             self.effects.draw_flash(self.screen)
             self.hud.draw(self.screen, self.score, self.lives, self.level_name, self.clock.get_fps())
+            if self.cpu_mode:
+                cpu_label = pygame.font.Font(None, 32).render("CPU", True, NEON_RED)
+                rect = cpu_label.get_rect(topright=(WIN_WIDTH - 15, 65))
+                self.screen.blit(cpu_label, rect)
             self.effects.draw_scanlines(self.screen)
 
             if self.state == "paused":

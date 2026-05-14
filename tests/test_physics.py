@@ -117,7 +117,7 @@ class TestPhysicsSystem(unittest.TestCase):
         orig_speed = math.sqrt(ball.vx ** 2 + ball.vy ** 2)
         self.physics.update_ball_speed(ball, 2.0)
         new_speed = math.sqrt(ball.vx ** 2 + ball.vy ** 2)
-        self.assertAlmostEqual(new_speed, min(12, orig_speed * 2), places=4)
+        self.assertAlmostEqual(new_speed, min(15, orig_speed * 2), places=4)
 
     def test_update_ball_speed_clamp_min(self):
         ball = Ball()
@@ -131,7 +131,7 @@ class TestPhysicsSystem(unittest.TestCase):
         ball.launch()
         self.physics.update_ball_speed(ball, 100)
         speed = math.sqrt(ball.vx ** 2 + ball.vy ** 2)
-        self.assertLessEqual(speed, 12)
+        self.assertAlmostEqual(speed, 15, places=4)
 
     def test_update_ball_speed_zero_velocity(self):
         ball = Ball()

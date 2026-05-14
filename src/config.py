@@ -17,16 +17,17 @@ NEON_ORANGE = (255, 140, 0)
 NEON_PURPLE = (180, 0, 255)
 NEON_YELLOW = (255, 255, 0)
 NEON_RED = (255, 30, 30)
+NEON_FIRE = (255, 60, 0)
 
 PADDLE_WIDTH = 120
 PADDLE_HEIGHT = 16
-PADDLE_SPEED = 8
+PADDLE_SPEED = 10
 PADDLE_COLOR = NEON_BLUE
 PADDLE_GLOW = (0, 100, 180)
 
 BALL_RADIUS = 8
-BALL_SPEED = 5
-BALL_MAX_SPEED = 12
+BALL_SPEED = 7
+BALL_MAX_SPEED = 15
 BALL_COLOR = WHITE
 BALL_GLOW = (100, 100, 255)
 
@@ -51,6 +52,7 @@ POWERUP_TYPES = {
     "laser": {"color": NEON_RED, "duration": 8000, "desc": "Laser"},
     "fast": {"color": NEON_ORANGE, "duration": 8000, "desc": "Fast Ball"},
     "slow": {"color": NEON_YELLOW, "duration": 8000, "desc": "Slow Ball"},
+    "fire": {"color": NEON_FIRE, "duration": 8000, "desc": "Fire Ball", "icon": "F"},
     "life": {"color": NEON_PINK, "duration": 0, "desc": "Extra Life"},
 }
 POWERUP_SIZE = 20

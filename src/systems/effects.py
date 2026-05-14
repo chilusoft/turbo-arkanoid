@@ -28,8 +28,8 @@ class ScreenEffects:
 
     def update(self, dt):
         if self.shake_intensity > 0:
-            self.shake_offset[0] = random.randint(-self.shake_intensity, self.shake_intensity)
-            self.shake_offset[1] = random.randint(-self.shake_intensity, self.shake_intensity)
+            self.shake_offset[0] = random.randint(int(-self.shake_intensity), int(self.shake_intensity))
+            self.shake_offset[1] = random.randint(int(-self.shake_intensity), int(self.shake_intensity))
             self.shake_intensity *= 0.9
             if self.shake_intensity < 0.5:
                 self.shake_intensity = 0

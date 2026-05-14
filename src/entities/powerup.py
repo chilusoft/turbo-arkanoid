@@ -40,7 +40,7 @@ class PowerUp:
             (self.x + self.size // 2, self.y + self.size // 2),
             self.size // 2,
         )
-        icon = self.ptype[0].upper()
+        icon = self.info.get("icon", self.ptype[0].upper())
         font = pygame.font.Font(None, 22)
         txt = font.render(icon, True, (0, 0, 0))
         rect = txt.get_rect(center=(self.x + self.size // 2, self.y + self.size // 2))

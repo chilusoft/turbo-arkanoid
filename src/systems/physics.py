@@ -64,7 +64,7 @@ class PhysicsSystem:
         speed = math.sqrt(ball.vx ** 2 + ball.vy ** 2)
         if speed == 0:
             return
-        new_speed = max(2, min(12, ball.speed * multiplier))
+        new_speed = max(2, min(15, ball.speed * multiplier))
         ball.speed = new_speed
         ratio = new_speed / speed
         ball.vx *= ratio

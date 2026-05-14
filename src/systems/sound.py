@@ -10,7 +10,7 @@ class SoundError(Exception):
 
 
 def _make_sound(samples):
-    samples = np.clip(samples * 0.3, -32767, 32767).astype(np.int16)
+    samples = np.clip(samples * 0.7, -32767, 32767).astype(np.int16)
     stereo = np.zeros((len(samples), 2), dtype=np.int16)
     stereo[:, 0] = samples
     stereo[:, 1] = samples
@@ -61,6 +61,7 @@ class SoundManager:
         self.music_playing = False
         if self.enabled:
             self._generate_all()
+            self.set_volume(1.0)
 
     def _generate_all(self):
         self.sounds["paddle_hit"] = _blip(440, 0.1)

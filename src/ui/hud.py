@@ -41,7 +41,7 @@ class Menu:
         self.font_item = pygame.font.Font(None, 36)
         self.font_small = pygame.font.Font(None, 20)
         self.selected = 0
-        self.items = ["Start Game", "Quit"]
+        self.items = ["Start Game", "CPU Play", "Quit"]
         self.title_glow = 0
 
     def update(self, dt):
@@ -82,7 +82,7 @@ class Menu:
             surface.blit(txt, rect)
 
         controls = self.font_small.render(
-            "Arrow Keys: Move  |  SPACE: Launch/Shoot  |  P: Pause",
+            "Arrow Keys: Move  |  SPACE: Launch/Shoot  |  P: Pause  |  C: CPU Play",
             True, (80, 80, 80),
         )
         rect = controls.get_rect(center=(WIN_WIDTH // 2, WIN_HEIGHT - 50))
