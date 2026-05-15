@@ -7,6 +7,8 @@ name = "pypi"
 coverage = "==7.13.5"
 numpy = "==2.2.6"
 pygame = "==2.6.1"
+pandas = "*"
+openpyxl = "*"
 
 [dev-packages]
 
