@@ -27,11 +27,12 @@ class Paddle:
     def update(self, dt, input_mgr):
         self.shot_cooldown = max(0, self.shot_cooldown - 1)
         keys = input_mgr.keys_down
+        dt_sec = dt / 1000.0
         if keys:
             if pygame.K_LEFT in keys or pygame.K_a in keys:
-                self.x -= self.speed
+                self.x -= self.speed * dt_sec
             if pygame.K_RIGHT in keys or pygame.K_d in keys:
-                self.x += self.speed
+                self.x += self.speed * dt_sec
         if pygame.K_SPACE in input_mgr.keys_just_pressed and self.laser_active and self.shot_cooldown == 0:
             self.shot_cooldown = 15
             return True
