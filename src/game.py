@@ -290,7 +290,7 @@ class Game:
                     self._debris_timer = random.randint(DEBRIS_SPAWN_MIN, DEBRIS_SPAWN_MAX)
                     self.debris.append(FloatingDebris())
             for d in self.debris[:]:
-                d.update(self.dt)
+                d.update(self.dt, [b.rect for b in self.level_mgr.bricks if b.alive])
                 if not d.alive:
                     self.debris.remove(d)
                     continue

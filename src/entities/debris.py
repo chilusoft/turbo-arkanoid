@@ -24,16 +24,62 @@ class FloatingDebris:
         self.color = random.choice(self.COLORS)
         self.age = 0
         self.alive = True
+        self._bounce_dir = 0
+        self._bounce_timer = 0
+        self._upward_timer = 0
 
     @property
     def rect(self):
         return pygame.Rect(self.x - self.size, self.y - self.size, self.size * 2, self.size * 2)
 
-    def update(self, dt):
+    def _check_collision(self, brick_rects, x, y):
+        test = pygame.Rect(x - self.size, y - self.size, self.size * 2, self.size * 2)
+        for br in brick_rects:
+            if test.colliderect(br):
+                return True
+        return False
+
+    def update(self, dt, brick_rects=None):
         dt_sec = dt / 1000.0
         self.age += dt_sec
-        self.y += self.speed * dt_sec
-        self.x += math.sin(self.age * self.frequency + self.phase) * self.amplitude * dt_sec
+
+        if brick_rects is None:
+            brick_rects = []
+
+        if self._bounce_timer > 0:
+            self._bounce_timer -= dt_sec
+
+        if self._upward_timer > 0:
+            self._upward_timer -= dt_sec
+            ny = self.y - self.speed * dt_sec * 0.5
+            nx = self.x + self._bounce_dir * self.amplitude * dt_sec * 0.5
+        else:
+            ny = self.y + self.speed * dt_sec
+            nx = self.x + math.sin(self.age * self.frequency + self.phase) * self.amplitude * dt_sec
+
+        nx = max(self.size, min(WIN_WIDTH - self.size, nx))
+
+        if not self._check_collision(brick_rects, nx, ny):
+            self.x = nx
+            self.y = ny
+        else:
+            try_left = nx - 10
+            try_right = nx + 10
+            left_ok = not self._check_collision(brick_rects, try_left, self.y + self.speed * dt_sec)
+            right_ok = not self._check_collision(brick_rects, try_right, self.y + self.speed * dt_sec)
+
+            if left_ok or right_ok:
+                self._bounce_dir = -1 if left_ok and (not right_ok or random.random() < 0.5) else 1
+                self.x += self._bounce_dir * 15
+                self.y += self.speed * dt_sec * 0.3
+                self._bounce_timer = 0.3
+                self.phase += math.pi
+            else:
+                self._upward_timer = random.uniform(0.5, 1.5)
+                self._bounce_dir = random.choice([-1, 1])
+                self.y -= self.speed * dt_sec * 0.6
+                self.x += self._bounce_dir * 10
+
         self.x = max(self.size, min(WIN_WIDTH - self.size, self.x))
         if self.y - self.size > WIN_HEIGHT:
             self.alive = False
