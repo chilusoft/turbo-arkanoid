@@ -31,7 +31,7 @@ class LevelManager:
 
     @property
     def cleared(self):
-        return len(self.active_bricks) == 0
+        return len([b for b in self.bricks if b.alive and not b.wall]) == 0
 
     def get_brick_score(self, brick):
         info = BRICK_TYPES.get(brick.type, BRICK_TYPES[1])

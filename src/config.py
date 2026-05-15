@@ -21,7 +21,7 @@ NEON_FIRE = (255, 60, 0)
 
 PADDLE_WIDTH = 120
 PADDLE_HEIGHT = 16
-PADDLE_SPEED = 10
+PADDLE_SPEED = 600  # pixels per second
 PADDLE_COLOR = NEON_BLUE
 PADDLE_GLOW = (0, 100, 180)
 
@@ -43,6 +43,7 @@ BRICK_TYPES = {
     3: {"color": NEON_YELLOW, "hp": 1, "score": 30, "glow": (100, 100, 0)},
     4: {"color": NEON_GREEN, "hp": 2, "score": 40, "glow": (10, 100, 10)},
     5: {"color": NEON_PURPLE, "hp": 3, "score": 50, "glow": (60, 0, 100)},
+    6: {"color": (80, 80, 95), "hp": 999, "score": 0, "glow": (40, 40, 55)},
 }
 
 POWERUP_TYPES = {
@@ -64,3 +65,7 @@ INITIAL_LIVES = 3
 
 PARTICLE_MAX_AGE = 60
 MAX_PARTICLES = 500
+
+DEBRIS_SPAWN_MIN = 5000
+DEBRIS_SPAWN_MAX = 10000
+DEBRIS_SCORE = 25
