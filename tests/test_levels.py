@@ -26,6 +26,7 @@ class TestLevelManager(unittest.TestCase):
         name = self.mgr.load_level(999)
         expected = LEVELS[999 % self.mgr.total_levels]["name"]
         self.assertEqual(name, expected)
+        self.assertEqual(self.mgr.total_levels, 275)
 
     def test_load_next(self):
         self.mgr.load_level(0)
@@ -90,7 +91,7 @@ class TestLevelManager(unittest.TestCase):
             for j, brick in enumerate(level["bricks"]):
                 for field in ("x", "y", "type"):
                     self.assertIn(field, brick, f"Level {i} brick {j} missing '{field}'")
-                self.assertIn(brick["type"], range(1, 6),
+                self.assertIn(brick["type"], range(1, 7),
                               f"Level {i} brick {j} invalid type {brick['type']}")
 
     def test_bricks_within_bounds(self):

@@ -90,6 +90,17 @@ class TestBrick(unittest.TestCase):
             self.assertEqual(b.color, info["color"])
             self.assertEqual(b.hp, info["hp"])
             self.assertEqual(b.score, info["score"])
+        b = Brick(0, 0, 6)
+        self.assertTrue(b.wall)
+        self.assertEqual(b.hp, 999)
+        self.assertEqual(b.score, 0)
+
+    def test_wall_indestructible(self):
+        b = Brick(0, 0, 6)
+        for _ in range(100):
+            destroyed = b.hit()
+            self.assertFalse(destroyed)
+        self.assertTrue(b.alive)
 
 
 if __name__ == "__main__":
