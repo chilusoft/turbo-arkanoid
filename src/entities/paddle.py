@@ -19,6 +19,7 @@ class Paddle:
         self.laser_timer = 0
         self.shot_cooldown = 0
         self.sticky = False
+        self.width_timer = 0
 
     @property
     def rect(self):
@@ -42,16 +43,32 @@ class Paddle:
     def reset(self):
         self.x = WIN_WIDTH // 2 - self.w // 2
         self.speed = self.base_speed
+        self.w = PADDLE_WIDTH
+        self.width_timer = 0
+        self.laser_active = False
+        self.laser_timer = 0
 
     def activate_laser(self, duration):
         self.laser_active = True
         self.laser_timer = duration
+
+    def activate_expand(self, duration):
+        self.width_timer = duration
+        self.w = min(200, PADDLE_WIDTH * 1.5)
+
+    def activate_shrink(self, duration):
+        self.width_timer = duration
+        self.w = max(60, PADDLE_WIDTH // 1.5)
 
     def update_powerups(self, dt):
         if self.laser_active:
             self.laser_timer -= dt
             if self.laser_timer <= 0:
                 self.laser_active = False
+        if self.width_timer > 0:
+            self.width_timer -= dt
+            if self.width_timer <= 0:
+                self.w = PADDLE_WIDTH
 
     def draw(self, surface, dt):
         glow_surf = pygame.Surface((self.w + 20, self.h + 20), pygame.SRCALPHA)

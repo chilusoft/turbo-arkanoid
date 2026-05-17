@@ -5,8 +5,9 @@ import pygame
 from .config import (
     WIN_WIDTH, WIN_HEIGHT, FPS, TITLE, BLACK, WHITE, NEON_RED,
     NEON_BLUE, NEON_GREEN, NEON_PURPLE, NEON_YELLOW, NEON_ORANGE,
-    POWERUP_TYPES, POWERUP_CHANCE, INITIAL_LIVES, MAX_LIVES,
+    POWERUP_TYPES, POWERUP_WEIGHTS, POWERUP_CHANCE, INITIAL_LIVES, MAX_LIVES,
     BRICK_TYPES, DEBRIS_SPAWN_MIN, DEBRIS_SPAWN_MAX, DEBRIS_SCORE,
+    DEBRIS_POWERUP_CHANCE,
 )
 from .input import InputManager
 from .entities.paddle import Paddle
@@ -64,6 +65,7 @@ class Game:
 
         self.combo = 0
         self.combo_timer = 0
+        self.portal = None
         self.sticky_timer = 0
         self.stuck_timer = 0
         self.cpu_mode = False
@@ -88,6 +90,7 @@ class Game:
         self.bullets.clear()
         self.debris.clear()
         self._debris_timer = 0
+        self.portal = None
         self._top_bricks_hit = False
         self._top_brick_y = 0
         self.particles.clear()
@@ -298,7 +301,18 @@ class Game:
                     self.score += DEBRIS_SCORE
                     self.particles.emit_burst(int(d.x), int(d.y), d.color)
                     self.sound.play("powerup")
+                    if random.random() < DEBRIS_POWERUP_CHANCE:
+                        types = [t for t in POWERUP_TYPES if t != "portal"]
+                        debris_ptype = random.choice(types)
+                        self.collect_powerup(PowerUp(d.x, d.y, debris_ptype))
                     self.debris.remove(d)
+
+            if self.portal:
+                self.portal["timer"] -= self.dt
+                self.portal["angle"] += 0.03
+                self.portal["y"] = self.paddle.y
+                if self.portal["timer"] <= 0:
+                    self.portal = None
 
             self.handle_collisions()
 
@@ -312,28 +326,7 @@ class Game:
                 brick.update()
 
             if self.level_mgr.cleared:
-                if self.level_mgr.current_level + 1 < self.level_mgr.total_levels:
-                    current_unlocked = self.db.get_progress(self.player_name)
-                    next_level = min(self.level_mgr.current_level + 2, current_unlocked + 3)
-                    self.db.save_progress(next_level, self.player_name)
-                    self.level_name = self.level_mgr.load_next()
-                    self.paddle.reset()
-                    self.balls = [Ball()]
-                    self.balls[0].follow_paddle(self.paddle)
-                    self.powerups.clear()
-                    self.bullets.clear()
-                    self.debris.clear()
-                    self._debris_timer = 0
-                    self._top_bricks_hit = False
-                    if self.level_mgr.bricks:
-                        self._top_brick_y = min(b.y for b in self.level_mgr.bricks)
-                    self.stuck_timer = 0
-                    self.cpu_mode = False
-                    self.sound.play("level_up")
-                else:
-                    self.db.add_high_score(self.player_name, self.score, self.level_mgr.current_level + 1)
-                    self.sound.play("level_up")
-                    self.state = "game_over"
+                self._advance_level()
 
             self.paddle.update_powerups(self.dt)
             self.particles.update(self.dt)
@@ -457,6 +450,21 @@ class Game:
                 self.sound.play("powerup")
                 self.powerups.remove(pw)
 
+        if self.portal:
+            portal_rect = pygame.Rect(
+                self.portal["x"] - self.portal["radius"],
+                self.portal["y"] - self.portal["radius"],
+                self.portal["radius"] * 2,
+                self.portal["radius"] * 2,
+            )
+            for ball in self.balls:
+                if ball.stuck:
+                    continue
+                if ball.rect.colliderect(portal_rect):
+                    self.portal = None
+                    self._advance_level()
+                    break
+
         for b in self.bullets[:]:
             b_rect = pygame.Rect(b["x"], b["y"], b["w"], b["h"])
             for brick in self.level_mgr.active_bricks:
@@ -487,16 +495,51 @@ class Game:
                     self.debris.remove(d)
                     break
 
+    def _advance_level(self):
+        if self.level_mgr.current_level + 1 < self.level_mgr.total_levels:
+            current_unlocked = self.db.get_progress(self.player_name)
+            next_level = min(self.level_mgr.current_level + 2, current_unlocked + 3)
+            self.db.save_progress(next_level, self.player_name)
+            self.level_name = self.level_mgr.load_next()
+            self.paddle.reset()
+            self.balls = [Ball()]
+            self.balls[0].follow_paddle(self.paddle)
+            self.powerups.clear()
+            self.bullets.clear()
+            self.debris.clear()
+            self.portal = None
+            self._debris_timer = 0
+            self._top_bricks_hit = False
+            if self.level_mgr.bricks:
+                self._top_brick_y = min(b.y for b in self.level_mgr.bricks)
+            self.stuck_timer = 0
+            self.cpu_mode = False
+            self.sound.play("level_up")
+        else:
+            self.db.add_high_score(self.player_name, self.score, self.level_mgr.current_level + 1)
+            self.sound.play("level_up")
+            self.state = "game_over"
+
     def spawn_powerup(self, x, y):
-        ptype = random.choice(list(POWERUP_TYPES.keys()))
+        types = list(POWERUP_WEIGHTS.keys())
+        weights = [POWERUP_WEIGHTS[t] for t in types]
+        ptype = random.choices(types, weights=weights, k=1)[0]
         self.powerups.append(PowerUp(x, y, ptype))
 
     def collect_powerup(self, pw):
         ptype = pw.ptype
         if ptype == "expand":
-            self.paddle.w = min(200, self.paddle.w * 1.5)
+            self.paddle.activate_expand(POWERUP_TYPES["expand"]["duration"])
         elif ptype == "shrink":
-            self.paddle.w = max(60, self.paddle.w // 1.5)
+            self.paddle.activate_shrink(POWERUP_TYPES["shrink"]["duration"])
+        elif ptype == "portal":
+            self.portal = {
+                "x": WIN_WIDTH - 35,
+                "y": self.paddle.y,
+                "radius": 30,
+                "timer": 15000,
+                "angle": 0,
+            }
         elif ptype == "multi":
             for ball in self.balls[:]:
                 for angle_offset in [-0.3, 0.3]:
@@ -551,6 +594,22 @@ class Game:
 
             for d in self.debris:
                 d.draw(self.screen)
+
+            if self.portal:
+                p = self.portal
+                portal_surf = pygame.Surface((p["radius"] * 2 + 20, p["radius"] * 2 + 20), pygame.SRCALPHA)
+                for r in range(p["radius"] + 10, 0, -2):
+                    a = max(0, 40 - r)
+                    color_shift = int(abs(math.sin(p["angle"] + r * 0.1)) * 155)
+                    color = (100 + color_shift, 200, 255, a)
+                    pygame.draw.circle(portal_surf, color, (p["radius"] + 10, p["radius"] + 10), r)
+                inner_angle = p["angle"] * 2
+                for i in range(6):
+                    a = inner_angle + i * 1.047
+                    px = p["radius"] + 10 + math.cos(a) * p["radius"] * 0.5
+                    py = p["radius"] + 10 + math.sin(a) * p["radius"] * 0.5
+                    pygame.draw.circle(portal_surf, (180, 230, 255, 120), (px, py), 4)
+                self.screen.blit(portal_surf, (p["x"] - p["radius"] - 10, p["y"] - p["radius"] - 10))
 
             for b in self.bullets:
                 pygame.draw.rect(self.screen, NEON_RED, (b["x"], b["y"], b["w"], b["h"]))

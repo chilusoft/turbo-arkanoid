@@ -55,10 +55,23 @@ POWERUP_TYPES = {
     "slow": {"color": NEON_YELLOW, "duration": 8000, "desc": "Slow Ball"},
     "fire": {"color": NEON_FIRE, "duration": 8000, "desc": "Fire Ball", "icon": "F"},
     "life": {"color": NEON_PINK, "duration": 0, "desc": "Extra Life"},
+    "portal": {"color": (100, 200, 255), "duration": 0, "desc": "Portal", "icon": "P"},
+}
+POWERUP_WEIGHTS = {
+    "expand": 15,
+    "shrink": 15,
+    "multi": 15,
+    "laser": 15,
+    "fast": 12,
+    "slow": 10,
+    "fire": 10,
+    "life": 5,
+    "portal": 1,
 }
 POWERUP_SIZE = 20
 POWERUP_SPEED = 3
 POWERUP_CHANCE = 0.25
+DEBRIS_POWERUP_CHANCE = 0.2
 
 MAX_LIVES = 5
 INITIAL_LIVES = 3
